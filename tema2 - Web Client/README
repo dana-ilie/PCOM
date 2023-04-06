@@ -1,0 +1,104 @@
+Ilie Dana Maria, 324CA
+
+# About
+I have used the HTTP laboratory as a refference to implement this assignment.
+
+# Implementation
+
+The client implemented in the "client.c" file interprets commands from the user
+, interacts with the server based on these commands and displays the server's
+response until the user enters the "exit" command.
+
+## While loop
+
+In the while loop, the command is read from the user and the corresponding
+action is performed.
+
+### Register
+If the command is "register", it is checked if the user is already logged in, as
+the user can only register if he is not logged in. If the user is not logged
+in, the function "register_user" is called in order to make the registration.
+In the "register_user" function, the user is asked for an username and
+password, which are then validated, as to not contain spaces.
+If the username and password are valid, a post request is sent to the server
+in order to register the user. If the response from the server contains an
+error, the error is extracted from the response and displayed to the user.
+
+### Login
+If the command is "login", it is checked if the user is already logged in, as
+the user can only login if he is not logged in. If the user is not logged in,
+the function "login_user" is called in order to make the login. In the
+"login_user" function, the user is asked for an username and password, then a
+post request is sent to the server in order to login the user. If the response
+from the server contains an error, the error is extracted from the response
+and displayed to the user.
+If the response doesn't contain an error, the cookie is extracted from the
+response and returned.
+
+### Enter_library
+If the command is "enter_library", it is checked if the user is logged in, as
+the user can only request access to the library if he is logged in. If the user
+is logged in and hasn't already entered the library, the function
+"enter_library" is called in order to make the request. In the "enter_library"
+function, a get request is sent to the server in order to request access to the
+library. If the response from the server contains an error, the error is
+extracted from the response and displayed to the user.
+If the response doesn't contain an error, the JWT token is extracted from the
+response and returned. The JWT token is then used to prove the access to the
+library.
+
+### Get_books
+If the command is "get_books", it is checked if the user is logged in, as
+the user can only request the books if he is logged in. If the user is logged
+in and has access to the library(previously entered the library), the function
+"get_books" is called in order to make the request. In the "get_books" function,
+a get request is sent to the server in order to request the books. If the
+response from the server contains an error, the error is extracted from the
+response and displayed to the user.
+If the response doesn't contain an error, the books are extracted from the
+response and displayed to the user.
+
+### Get_book
+If the command is "get_book", an id is read from the user and validated. If the
+id is valid, it is checked if the user is logged in, as the user can only
+request the book if he is logged in. If the user is logged in and has access to
+the library(previously entered the library), the function "get_book" is called.
+In the "get_book" function, a get request is sent to the server in order to
+get the book. If the response from the server contains an error, the error is
+extracted from the response and displayed to the user.
+If the response doesn't contain an error, the book is extracted from the
+response and displayed to the user.
+
+### Add_book
+If the command is "add_book", it is checked if the user is logged in, as
+the user can only add a book if he is logged in. If the user is logged in and
+has access to the library(previously entered the library), the function
+"add_book" is called in order to make the request. In the "add_book" function,
+a title, an author, a genre, a number of pages and a publisher are read from
+the user and validated. Then a post request is sent to the server in order to
+add the book.
+If the response from the server contains an error, the error is extracted from
+the response and displayed to the user.
+
+### Delete_book
+If the command is "delete_book", an id is read from the user and validated.
+If the id is valid, it is checked if the user is logged in, as the user can only
+delete a book if he is logged in. If the user is logged in and has access to the
+library(previously entered the library), the function "delete_book" is called.
+In the "delete_book" function, a delete request is sent to the server in order
+to delete the book. If the response from the server contains an error, the
+error is extracted from the response and displayed to the user.
+
+### Logout
+If the command is "logout", it is checked if the user is logged in, as the user
+can only logout if he is logged in. If the user is logged in, the function
+"logout_user" is called in order to make the logout. In the "logout_user"
+function, a get request is sent to the server in order to logout the user.
+If the response from the server contains an error, the error is extracted from
+the response and displayed to the user.
+
+### Exit
+If the command is "exit", the while loop is terminated.
+
+
+
