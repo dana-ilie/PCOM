@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _SKEL_H_
+#define _SKEL_H_
+
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <unistd.h>
@@ -25,9 +27,9 @@
 #include <net/if_arp.h>
 #include <asm/byteorder.h>
 
-/* 
- *Note that "buffer" should be at least the MTU size of the 
- * interface, eg 1500 bytes 
+/*
+ *Note that "buffer" should be at least the MTU size of the
+ * interface, eg 1500 bytes
  */
 #define MAX_LEN 1600
 #define ROUTER_NUM_INTERFACES 3
@@ -35,7 +37,7 @@
 #define DIE(condition, message) \
 	do { \
 		if ((condition)) { \
-			fprintf(stderr, "[%d]: %s\n", __LINE__, (message)); \
+			fprintf(stderr, "[(%s:%d)]: %s\n", __FILE__, __LINE__, (message)); \
 			perror(""); \
 			exit(1); \
 		} \
@@ -58,115 +60,82 @@ struct arp_header {
 	uint32_t spa;   /* Sender IP address */
 	uint8_t tha[ETH_ALEN];  /* Target hardware address */
 	uint32_t tpa;   /* Target IP address */
-} __attribute__((packed)); 
+} __attribute__((packed));
+
+/* Route table entry */
+struct route_table_entry {
+	uint32_t prefix;
+	uint32_t next_hop;
+	uint32_t mask;
+	int interface;
+} __attribute__((packed));
+
+/* ARP table entry when skipping the ARP exercise */
+struct arp_entry {
+    __u32 ip;
+    uint8_t mac[6];
+};
 
 extern int interfaces[ROUTER_NUM_INTERFACES];
 
 /**
- * @brief 
- * 
- * @param interface interface to send packet on
+ * @brief Sends a packet on an interface.
+ *
  * @param m packet
- * @return int 
+ * @return int
  */
-int send_packet(int interface, packet *m);
+int send_packet(packet *m);
 /**
- * @brief Get the packet object
- * 
- * @param m 
- * @return int 
+ * @brief Blocking function for receiving packets.
+ * Returns -1 in exceptional conditions.
+ *
+ * @param m
+ * @return int
  */
 int get_packet(packet *m);
 
 /**
- * @brief Get the interface ip object
- * 
- * @param interface 
- * @return char* 
+ * @brief Get the interface ip object.
+ *
+ * @param interface
+ * @return char*
  */
 char *get_interface_ip(int interface);
 
 /**
- * @brief Get the interface mac object
- * 
- * @param interface 
- * @param mac 
+ * @brief Get the interface mac object. The function writes
+ * the MAC at the pointer mac. uint8_t *mac should be allocated.
+ *
+ * @param interface
+ * @param mac
  */
 void get_interface_mac(int interface, uint8_t *mac);
 
 /**
- * @brief 
- * 
- * @param argc 
- * @param argv 
+ * @brief Homework infrastructure function.
+ *
+ * @param argc
+ * @param argv
  */
 void init(int argc, char *argv[]);
 
 /**
- * @brief 
- * 
+ * @brief ICMP checksum per RFC 792. To compute the checksum
+ * of an ICMP header we must set the checksum to 0 beforehand.
+ *
+ * @param data memory area to checksum
+ * @param size in bytes
  */
-void parse_arp_table();
+uint16_t icmp_checksum(uint16_t *data, size_t size);
 
 /**
- * @brief 
- * 
- * @param daddr destination IP
- * @param saddr source IP
- * @param sha source MAC
- * @param dha destination MAC
- * @param type Type
- * @param code Code
- * @param interface interface 
- * @param id id
- * @param seq sequence
+ * @brief IPv4 checksum per  RFC 791. To compute the checksum
+ * of an IP header we must set the checksum to 0 beforehand.
+ *
+ * @param data memory area to checksum
+ * @param size in bytes
  */
-void send_icmp(uint32_t daddr, uint32_t saddr, uint8_t *sha, uint8_t *dha, u_int8_t type, u_int8_t code, int interface, int id, int seq);
-
-
-/**
- * @brief 
- * 
- * @param daddr destination IP
- * @param saddr source IP
- * @param sha source MAC
- * @param dha destination MAC
- * @param type Type
- * @param code Code
- * @param interface interface 
- */
-void send_icmp_error(uint32_t daddr, uint32_t saddr, uint8_t *sha, uint8_t *dha, u_int8_t type, u_int8_t code, int interface);
-
-
-/**
- * @brief 
- * 
- * @param daddr destination IP address
- * @param saddr source IP address
- * @param eth_hdr ethernet header
- * @param interface interface
- * @param arp_op ARP OP: ARPOP_REQUEST or ARPOP_REPLY
- */
-void send_arp(uint32_t daddr, uint32_t saddr, struct ether_header *eth_hdr, int interface, uint16_t arp_op);
-/**
- * @brief 
- * 
- * @param buffer 
- * @return struct icmphdr* A pointer to a structure of type icmphdr that is inside the buffer. Basically, we return the
- * icmp header from buffer.
- * If this is not an ICMP packet, we return NULL.
- */
-struct icmphdr * parse_icmp(void *buffer);
-
-/**
- * @brief 
- * 
- * @param buffer 
- * @return struct arp_header* A pointer to a structure of type arp_header that is inside the buffer. Basically, we return the
- * arp header from buffer.
- * If this is not an ARP frame, we return NULL.
- */
-struct arp_header* parse_arp(void *buffer);
+uint16_t ip_checksum(uint8_t *data, size_t size);
 
 /**
  * hwaddr_aton - Convert ASCII string to MAC address (colon-delimited format)
@@ -176,7 +145,16 @@ struct arp_header* parse_arp(void *buffer);
  */
 int hwaddr_aton(const char *txt, uint8_t *addr);
 
-uint16_t ip_checksum(void* vdata,size_t length);
+/* Populates a route table from file, rtable should be allocated
+ * e.g. rtable = malloc(sizeof(struct route_table_entry) * 80000);
+ * This function returns the size of the route table.
+ */
+int read_rtable(const char *path, struct route_table_entry *rtable);
 
-void build_ethhdr(struct ether_header *eth_hdr, uint8_t *sha, uint8_t *dha, unsigned short type);
+/* Parses a static mac table from path and populates arp_table.
+ * arp_table should be allocated and have enough space. This
+ * function returns the size of the arp table.
+ * */
+int parse_arp_table(char *path, struct arp_entry *arp_table);
 
+#endif /* _SKEL_H_ */

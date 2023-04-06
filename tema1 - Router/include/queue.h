@@ -1,5 +1,5 @@
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef _QUEUE_H_
+#define _QUEUE_H_
 
 struct queue;
 typedef struct queue *queue;
@@ -16,4 +16,4 @@ extern void *queue_deq(queue q);
 /* return a true value if and only if the queue is empty */
 extern int queue_empty(queue q);
 
-#endif
+#endif /* _QUEUE_H_ */
